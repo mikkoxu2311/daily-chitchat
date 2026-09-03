@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/mikkoxu2311/daily-chitchat/blob/main/references/handoff-v2.schema.json",
+  "title": "Daily Chitchat v2 handoff",
+  "type": "object",
+  "required": [
+    "schema",
+    "date",
+    "mode",
+    "review_context",
+    "activation_target",
+    "track_a",
+    "track_b",
+    "candidate_cards",
+    "transcript_warnings"
+  ],
+  "properties": {
+    "schema": {"const": "english-speaking-session-handoff/v2"},
+    "date": {"type": "string", "format": "date"},
+    "duration_minutes": {"type": ["number", "null"], "minimum": 0},
+    "mode": {"enum": ["daily", "scenario"]},
+    "topic": {"type": "string"},
+    "summary": {"type": "string"},
+    "review_context": {
+      "type": "object",
+      "required": ["source_file", "source_status", "targets", "warnings"],
+      "properties": {
+        "source_file": {"type": "string"},
+        "source_updated": {"type": ["string", "null"]},
+        "source_status": {"enum": ["read", "missing", "stale", "unavailable"]},
+        "targets": {
+          "type": "array",
+          "maxItems": 2,
+          "items": {
+            "type": "object",
+            "required": ["target", "type", "result", "evidence"],
+            "properties": {
+              "target": {"type": "string"},
+              "type": {"enum": ["chunk", "grammar"]},
+              "source_session": {"type": ["string", "null"]},
+              "result": {"enum": ["independent", "prompted", "incorrect", "not_used"]},
+              "evidence": {"type": ["string", "null"]}
+            },
+            "additionalProperties": true
+          }
+        },
+        "warnings": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": true
+    },
+    "activation_target": {
+      "type": "object",
+      "required": ["target", "result", "evidence"],
+      "properties": {
+        "target": {"type": ["string", "null"]},
+        "result": {"enum": ["not_set", "independent", "prompted", "incorrect", "not_used"]},
+        "evidence": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    },
+    "track_a": {
+      "type": "array",
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "required": ["intended_meaning", "transcript_confidence", "suggested_chunk", "resay_result", "provisional_status"],
+        "properties": {
+          "intended_meaning": {"type": "string"},
+          "user_attempt": {"type": ["string", "null"]},
+          "transcript_confidence": {"enum": ["high", "medium", "low"]},
+          "suggested_chunk": {"type": "string"},
+          "explanation": {"type": "string"},
+          "resay_actual": {"type": ["string", "null"]},
+          "resay_result": {"enum": ["successful", "partial", "unsuccessful", "not_attempted"]},
+          "provisional_status": {"enum": ["discard", "card", "deepen_candidate"]},
+          "status_reason": {"type": "string"}
+        },
+        "additionalProperties": true
+      }
+    },
+    "track_b": {
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["pattern_id", "incorrect", "corrected", "provisional_status"],
+        "properties": {
+          "pattern_id": {"type": "string"},
+          "incorrect": {"type": "string"},
+          "corrected": {"type": "string"},
+          "current_session_count": {"type": ["integer", "null"], "minimum": 1},
+          "provisional_status": {"enum": ["observe", "deepen_candidate"]}
+        },
+        "additionalProperties": true
+      }
+    },
+    "candidate_cards": {
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["cue", "chunk", "example", "source_track_a_index"],
+        "properties": {
+          "cue": {"type": "string"},
+          "chunk": {"type": "string"},
+          "example": {"type": "string"},
+          "source_track_a_index": {"type": "integer", "minimum": 0, "maximum": 2}
+        },
+        "additionalProperties": true
+      }
+    },
+    "transcript_warnings": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": true
+}

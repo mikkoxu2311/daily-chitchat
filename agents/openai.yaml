@@ -1,0 +1,4 @@
+interface:
+  display_name: "Daily Chitchat"
+  short_description: "Practice spoken English and save verified learning history"
+  default_prompt: "Use $daily-chitchat to start an English speaking session, then review and save the evidence to Obsidian."
