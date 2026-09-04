@@ -42,7 +42,7 @@ When Voice cannot access local files directly:
 2. Paste the customized coach file into Project Instructions.
 3. Add the current Review Queue as a Project Source.
 4. Start a Voice conversation.
-5. Say `review session`, complete the guided re-say, then say `handoff to codex`.
+5. Say `review session`, complete the guided re-say, then say `Save Session` (capitalization does not matter).
 6. Paste the returned JSON into a Codex task that has access to the vault.
 7. Replace or re-upload the queue source after Codex refreshes it.
 

@@ -93,7 +93,7 @@ This is the most portable setup:
 3. Add the current `English Speaking Review Queue.md` as a Project Source.
 4. Start a Voice chat and speak normally.
 5. Say `review session` and complete the guided re-say.
-6. Say `handoff to codex`.
+6. Say `Save Session` (capitalization does not matter).
 7. Paste the returned JSON into a Codex task opened on your vault.
 8. Replace the Project Source after Codex refreshes the queue.
 
@@ -112,7 +112,7 @@ During the session you can optionally use:
 - `scenario: checking into a hotel` — role-play a specific situation.
 - `activation target: push back on` — manually prioritize a high-stakes expression.
 - `review session` — stop the conversation and review evidence-backed gaps.
-- `handoff to codex` — produce or directly process the structured handoff.
+- `Save Session` — produce or directly process the structured handoff. Voice should recognize it case-insensitively.
 
 Activation Targets are exceptional, not required daily state. Normal retrieval comes from the review queue.
 

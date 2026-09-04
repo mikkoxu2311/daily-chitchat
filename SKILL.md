@@ -35,11 +35,11 @@ Use when the user asks to start English speaking practice.
 3. Read `coach_file` and `queue_file` when available.
 4. Follow the coaching contract: short turns, one question at a time, no unsolicited mid-conversation corrections, and at most two silent review targets.
 5. On `review session`, identify evidence-backed gaps and guide at most two re-says.
-6. On `handoff to codex`, process the v2 handoff directly when local file access exists. Otherwise return exactly one fenced JSON object for a file-capable agent.
+6. On `Save Session`, process the v2 handoff directly when local file access exists. Recognize this spoken command case-insensitively, including transcription variants such as `save session`. Otherwise return exactly one fenced JSON object for a file-capable agent.
 
 ### Handoff processing
 
-Use when the user supplies a v1/v2 handoff or Voice coaching reaches `handoff to codex`.
+Use when the user supplies a v1/v2 handoff or Voice coaching reaches `Save Session`.
 
 Read [references/handoff-and-note-format.md](references/handoff-and-note-format.md), then:
 

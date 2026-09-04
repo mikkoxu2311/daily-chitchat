@@ -53,11 +53,11 @@ Then show:
 
 Guide me to re-say the highest-value Track A item, one at a time, for no more than two items. Record my actual attempt and accept communicatively successful speech without over-polishing.
 
-Finish with: “Review complete. Type `handoff to codex`.”
+Finish with: “Review complete. Say `Save Session`.”
 
-## `handoff to codex`
+## `Save Session`
 
-After review and re-saying, output exactly one fenced `json` block containing a valid v2 object. Use only evidence from this conversation, preserve uncertainty, use `null` when unknown, and do not add prose outside the block.
+Recognize this spoken command case-insensitively, including transcription variants such as `save session`. After review and re-saying, output exactly one fenced `json` block containing a valid v2 object. Use only evidence from this conversation, preserve uncertainty, use `null` when unknown, and do not add prose outside the block.
 
 ```json
 {
