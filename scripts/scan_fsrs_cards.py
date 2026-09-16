@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Read Obsidian speaking cards and report their FSRS due state.
+"""Read English speaking flashcards and report their FSRS due state.
 
-The scanner is deliberately read-only. It never writes scheduling metadata.
+Optional diagnostic only; not part of the Voice speaking loop.
+This script is deliberately read-only. It never writes scheduling metadata.
 """
 
 from __future__ import annotations
@@ -14,12 +15,12 @@ from pathlib import Path
 
 
 CARD_RE = re.compile(
-    r"^### Card[ \t]+\d+[ \t]+·[ \t]+(?P<title>.+?)[ \t]*$\n(?P<body>.*?)(?=^### Card[ \t]+\d+[ \t]+·|^##[ \t]|\Z)",
+    r"^### Card\s+\d+\s+·\s+(?P<title>.+?)\s*$\n(?P<body>.*?)(?=^### Card\s+\d+\s+·|^##\s|\Z)",
     re.MULTILINE | re.DOTALL,
 )
 SCHEDULE_RE = re.compile(r"<!--SR:!fsrs,(?P<data>[^>]+)-->")
-CHUNK_RE = re.compile(r"^\*\*Chunk:\*\*[ \t]*(?P<chunk>.+?)[ \t]*$", re.MULTILINE)
-EXAMPLE_RE = re.compile(r"^\*\*Example:\*\*[ \t]*(?P<example>.+?)[ \t]*$", re.MULTILINE)
+CHUNK_RE = re.compile(r"^\*\*Chunk:\*\*\s*(?P<chunk>.+?)\s*$", re.MULTILINE)
+EXAMPLE_RE = re.compile(r"^\*\*Example:\*\*\s*(?P<example>.+?)\s*$", re.MULTILINE)
 
 
 def parse_timestamp(value: str) -> datetime:
@@ -32,6 +33,8 @@ def schedule_state(raw: str | None, now: datetime) -> dict:
 
     fields = raw.split(",")
     due_at = parse_timestamp(fields[0])
+    if due_at.tzinfo is None:
+        raise ValueError("FSRS due timestamp has no timezone")
     local_due = due_at.astimezone(now.tzinfo)
     if due_at <= now:
         status = "overdue"
@@ -56,7 +59,12 @@ def parse_card(note: Path, title: str, body: str, now: datetime) -> dict:
     example_match = EXAMPLE_RE.search(body)
     schedule_match = SCHEDULE_RE.search(body)
     question = body.split("\n?\n", 1)[0].strip()
-    schedule = schedule_state(schedule_match.group("data") if schedule_match else None, now)
+    try:
+        schedule = schedule_state(schedule_match.group("data") if schedule_match else None, now)
+        if not schedule_match and "<!--SR:" in body:
+            schedule = {"status": "unsupported_schedule", "warning": "Non-FSRS scheduling comment; not an unscheduled card"}
+    except (ValueError, TypeError, IndexError) as exc:
+        schedule = {"status": "invalid_schedule", "warning": str(exc)}
     return {
         "title": title.strip(),
         "chunk": chunk_match.group("chunk").strip() if chunk_match else title.strip(),
@@ -68,10 +76,25 @@ def parse_card(note: Path, title: str, body: str, now: datetime) -> dict:
     }
 
 
-def scan_sessions(sessions_dir: Path, now: datetime) -> dict:
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("sessions_dir", type=Path)
+    parser.add_argument("--now", help="ISO timestamp used for deterministic testing")
+    args = parser.parse_args()
+
+    if not args.sessions_dir.is_dir():
+        print(json.dumps({"status": "error", "error": "Sessions directory does not exist"}))
+        raise SystemExit(2)
+
+    now = parse_timestamp(args.now).astimezone() if args.now else datetime.now().astimezone()
     cards = []
-    for note in sorted(sessions_dir.glob("*.md")):
-        text = note.read_text(encoding="utf-8")
+    warnings = []
+    for note in sorted(args.sessions_dir.glob("*.md")):
+        try:
+            text = note.read_text(encoding="utf-8")
+        except (OSError, UnicodeError) as exc:
+            warnings.append({"source_note": note.stem, "warning": str(exc)})
+            continue
         flashcards = re.search(r"^## Flashcards\s*$\n(?P<body>.*)\Z", text, re.MULTILINE | re.DOTALL)
         if not flashcards:
             continue
@@ -82,26 +105,23 @@ def scan_sessions(sessions_dir: Path, now: datetime) -> dict:
     for card in cards:
         status = card["schedule"]["status"]
         counts[status] = counts.get(status, 0) + 1
+        if "warning" in card["schedule"]:
+            warnings.append({"source_note": card["source_note"], "card": card["title"], "warning": card["schedule"]["warning"]})
 
-    return {
-        "scanned_at": now.isoformat(),
-        "sessions_dir": str(sessions_dir),
-        "counts": counts,
-        "cards": cards,
-    }
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("sessions_dir", type=Path)
-    parser.add_argument("--now", help="ISO timestamp for deterministic testing")
-    args = parser.parse_args()
-
-    if not args.sessions_dir.is_dir():
-        parser.error(f"sessions directory does not exist: {args.sessions_dir}")
-
-    now = parse_timestamp(args.now).astimezone() if args.now else datetime.now().astimezone()
-    print(json.dumps(scan_sessions(args.sessions_dir, now), ensure_ascii=False, indent=2))
+    print(
+        json.dumps(
+            {
+                "scanned_at": now.isoformat(),
+                "status": "partial" if warnings else "ok",
+                "warnings": warnings,
+                "sessions_dir": str(args.sessions_dir),
+                "counts": counts,
+                "cards": cards,
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
 
 
 if __name__ == "__main__":

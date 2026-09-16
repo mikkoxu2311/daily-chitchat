@@ -1,88 +1,48 @@
 ---
 name: daily-chitchat
-description: Run English speaking practice and turn a Voice handoff into source-traceable Obsidian session notes, production flashcards, and a bounded review queue. Use when the user starts an English speaking session, provides an english-speaking-session-handoff/v1 or v2 object, or asks to save or review a speaking session.
+description: Start English practice with daily-chitchat, including "Use the daily chitchat skill and start our daily session"; load the speaking queue and arrange learning or transfer checks. Also handles Review Session, Save Session, and speaking handoffs.
 ---
 
 # Daily Chitchat
 
-Run a short English conversation, review only high-value speaking gaps, and preserve the result as verifiable learning history. Voice analysis is evidence, not authority: never invent a transcript, recurrence, mastery, or FSRS result.
+Make the learner speak, then carry useful learning into the next conversation. Voice is the main practice loop. Obsidian flashcards are an optional supplement with independent FSRS scheduling.
 
-## Establish the workspace
+## Shared boundaries
 
-Before reading or writing learning data, resolve these locations from the current workspace or the user's explicit configuration:
+- Voice output is English, including preparation, feedback, review, saving and errors; a brief Chinese transfer-scenario cue is allowed when helpful. Use simpler English when needed. The learner may use Chinese; do not switch the coach's language unless explicitly asked to override this preference.
+- Maintenance and workflow discussions are not practice sessions; answer in the user's language. Do not modify their Master Prompt as part of this skill.
+- Session notes hold evidence; `English Speaking Review Queue - AI Draft.md` is a derived speaking snapshot. Flashcard scores/due dates never set speaking status or target priority. Never write FSRS metadata.
+- Use the configured project from `local.json`, or an explicitly selected project containing `Sessions/`. Read [project-setup.md](references/project-setup.md) only for setup, relocation, or sharing. Do not create parallel storage or change task models automatically.
+- Coaching and review are read-only. Save/process requests authorize writing the Session and Queue in the configured English project without another conversational confirmation. Honor any recorded standing authorization for routine English learning files; do not ask “shall I store it?” again. Setup and maintenance authorize their requested changes. Apply host permissions as supplied; a read-only helper is not evidence that all file writing is unavailable. Use ordinary file-editing tools for saving and verify actual results. A request to apply the review instructions is not a request to edit the installed Skill.
 
-- `vault_root`: the Obsidian vault root.
-- `project_dir`: the English-learning folder. Recommend `<vault_root>/English Speaking` only when no established folder exists.
-- `sessions_dir`: `<project_dir>/Sessions`.
-- `queue_file`: `<project_dir>/English Speaking Review Queue.md`.
-- `coach_file`: `<project_dir>/ChatGPT Voice Project Instructions.md`.
+## Start or resume practice
 
-Never assume a username, home directory, vault name, or private project path. Search for an existing queue and session notes before creating a parallel structure. Create or edit files only when the user asks to set up, process, save, or refresh the workflow.
+Preferred Remote Voice start: **"Use the daily chitchat skill and start our daily session."** Treat spoken "daily chitchat", "daily chit-chat", and written `daily-chitchat` as this same skill. Starting this skill already includes **"Read my speaking queue and tell me which expressions to review before we start."** The learner does not need to say that extra sentence. Load the Queue and give the proactive review reminder below before ordinary conversation.
 
-For first-time setup, read [references/setup.md](references/setup.md). Use [assets/voice-project-instructions.md](assets/voice-project-instructions.md) as a template, adapting only the clearly marked learner profile fields.
+Recognize “Let's start our English session today,” “Let’s do our English session today,” “English session today,” and equivalent start requests, ignoring case, apostrophe variants and speech punctuation. Explicit skill naming is not required. Route these requests here even in a generic Remote new-chat task; use local.json to locate the English project. In the dedicated English project, a greeting is also enough. “Prepare my English session” loads context without starting a spoken exercise.
 
-## Choose the mode
+Before the first practice question, execute this installed skill's `scripts/session_context.py prepare` using Python 3. Resolve the script relative to this SKILL.md and quote its path. It reads canonical coaching rules, local project preferences, and the current speaking queue in one call. Do not merely read SKILL.md and promise to use history later. Read the tool result before replying.
 
-### Voice coaching
+- On success, apply references/voice-coaching.md: choose at most two supported targets, at most one transfer check. Say the Queue was loaded. Name and explain learning targets, but withhold the English form of a check target. For a check, announce a short scenario and give a new context/meaning cue; never disclose its answer before the attempt. In prepare-only mode, announce the plan without beginning the exercise. No eligible targets means say so without inventing any.
+- Record announced_targets for disclosed answers only. Context, meaning and one source-memory cue can support a valid transfer check; English answer disclosure makes later same-session use prompted practice. Follow the three-state policy: learning, ready_to_check, retired.
+- If the queue is missing, use no old targets. If stale or partially invalid, use only supported entries and carry the warning to Save; do not rebuild the whole history before speaking. If preparation fails, read [voice-coaching.md](references/voice-coaching.md), briefly state saved targets are unavailable, and continue without pretending history was loaded.
+- Keep loaded coaching rules and selected targets in this conversation. Do not rerun preparation on every utterance. After reconnecting, recover the latest session state/preparation result when available; reload only if missing or changed.
+- For realtime-delegated requests, put the queue-loaded receipt, learning reminders or an answer-free transfer scenario and next question in the returned response itself; tool output alone is not a handoff to the Voice intermediary. On subsequent requests about old expressions, answer from the loaded Queue with names and source dates when explicitly asked (a revealed target cannot pass a check that session), not just an unnamed elicitation prompt. If no context survives, rerun prepare before answering. Apply the coaching rules to the returned feedback. The host controls whether the first Voice turn delegates at all; do not claim a routing guarantee from a script test.
 
-Use when the user asks to start English speaking practice.
+## Review Session
 
-1. If configured session history exists, run the read-only scanner:
+Follow Review in the already-loaded [voice-coaching.md](references/voice-coaching.md). Recognize natural variants such as “Let's review the session.” Report meaningful old-target results, at most three expression gaps and two supported grammar observations; guide 0–2 re-says one at a time. Do not replace review with polished phrase lists. No worthwhile gap, an earlier valid re-say, or a request to skip is a valid reason to finish without another exercise.
 
-   `python3 scripts/scan_fsrs_cards.py "<sessions_dir>"`
+## Save Session
 
-2. Refresh the derived queue from scanner output and session evidence. If scanning fails, continue with the existing queue and report the warning in the handoff.
-3. Read `coach_file` and `queue_file` when available.
-4. Follow the coaching contract: short turns, one question at a time, no unsolicited mid-conversation corrections, and at most two silent review targets.
-5. On `review session`, identify evidence-backed gaps and guide at most two re-says.
-6. On `Save Session`, process the v2 handoff directly when local file access exists. Recognize this spoken command case-insensitively, including transcription variants such as `save session`. Otherwise return exactly one fenced JSON object for a file-capable agent.
+Recognize case-insensitive `Save Session` and clear in-context transcription variants such as “safe session.” A review request alone does not save. Read [handoff-and-note-format.md](references/handoff-and-note-format.md) only now (or when importing a handoff).
 
-### Handoff processing
+Build the v3 handoff internally from available conversation evidence. Accept legacy v1/v2 imports. No manual JSON transfer is needed when local writing is available. Save even if review/re-saying was skipped, interrupted, or incomplete; label that state honestly. Never invent attempts, time, chronology, or mastery.
 
-Use when the user supplies a v1/v2 handoff or Voice coaching reaches `Save Session`.
+Search relevant prior expressions, semantic equivalents, and grammar evidence before decisions; read matching sections rather than every old session. Write the Session first, then update the Queue from that evidence and supported history. Keep optional card decisions separate from speaking progress. Verify both writes, card syntax and source links with `scripts/session_context.py check --session "ABSOLUTE_NOTE_PATH"`, plus semantic review of changed entries.
 
-Read [references/handoff-and-note-format.md](references/handoff-and-note-format.md), then:
+Return a brief English confirmation with the saved note link and whether Queue refresh succeeded. If only the Session saved, say so and resume the Queue update on retry; do not create another Session. If local writing is unavailable, state “Not saved to Obsidian” and provide one recoverable fenced v3 JSON block in text. Do not read JSON aloud or claim the loop is complete.
 
-1. Parse the handoff and preserve uncertainty, missing values, empty re-says, and transcript warnings.
-2. Inspect existing sessions for the proposed Chunk, semantic equivalents, cue intent, grammar evidence, and prior transfer evidence. String matching is only a lead.
-3. Give each Track A gap one final state: `discard`, `card`, or `deepen`.
-4. Normalize Track B labels from quoted evidence. Keep ambiguous claims as observations.
-5. For v2 review results, accept `independent` only when the learner attempted the target before Voice revealed or strongly hinted at it.
-6. Save one concise session note. Add zero to two production cards; zero is valid.
-7. Run the scanner and rebuild the bounded queue from session history plus the scan.
-8. Re-read the saved files and verify paths, frontmatter, card syntax, source links, and the absence of unrelated edits.
+## Optional card inspection
 
-## Learning decisions
-
-### Discard
-
-Discard when evidence is unclear, the original wording already worked, the suggestion is merely stylistic or too narrow, the cue is ambiguous, an equivalent card exists, or later independent use shows the item no longer needs active Voice testing. Preserve the historical evidence but create no card.
-
-### Card
-
-Create a card only when the gap materially blocked the intended meaning, the target is a reusable spoken Chunk (normally 2–6 words), the learner is likely to need it again, one concrete cue can elicit one main answer, and no active semantic equivalent exists. Ground the example in the learner's real context.
-
-### Deepen
-
-Use `deepen` only when ordinary review has plausibly failed or near-term stakes justify practice. Evidence may include the same gap in two distinct sessions, the same confirmed grammar problem in three sessions within 30 days, recall without conversational transfer, three recent Again/Hard results, or an imminent high-stakes situation.
-
-An Activation Target is optional and belongs only to `deepen`. Routine queue retrieval is not an Activation Target.
-
-## Queue rules
-
-The queue is derived state; session notes and FSRS metadata are sources of truth.
-
-- Active Review Targets: maximum 8. Rank overdue, due now, then unscheduled new cards. Exclude future-scheduled cards unless they qualify for Deepen.
-- Deepen Targets: maximum 5. Require evidence under the Deepen rule.
-- Grammar Watch: maximum 5. Include only grounded patterns still worth observing.
-- Recently Demonstrated: maximum 8. Include recent independent transfer and remove those items from Active Review Targets.
-
-Voice selects at most two active targets per session and must not reveal an answer before the learner attempts it. The scanner never writes or synthesizes `<!--SR:...-->` comments. Conversational transfer and FSRS recall are separate signals.
-
-## Safe file behavior
-
-- Use `YYYY-MM-DD English Speaking.md` for the first session of a day and increment a suffix for a genuinely separate session.
-- Compare before writing so the same handoff is not recorded twice.
-- Preserve existing note structure, links, tags, frontmatter, and scheduler comments.
-- Do not expose other vault content to Voice or a bridge. Scope access to `project_dir`.
-- After writing, report the saved note, cards added, items discarded or deepened, normalized grammar labels, and remaining uncertainty.
+`scripts/scan_fsrs_cards.py` is a read-only diagnostic for explicit Obsidian-card questions. It is not part of Start, Review, Save, or speaking-queue reconstruction. It neither schedules cards nor supplies complete rating history.

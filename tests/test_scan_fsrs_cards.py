@@ -1,5 +1,8 @@
 import importlib.util
 import tempfile
+import subprocess
+import json
+import sys
 import unittest
 from datetime import datetime
 from pathlib import Path
@@ -37,9 +40,9 @@ class ScanFsrsCardsTest(unittest.TestCase):
 """
             note.write_text(original, encoding="utf-8")
 
-            result = MODULE.scan_sessions(
-                Path(directory), datetime.fromisoformat("2026-01-02T09:00:00+00:00")
-            )
+            result = json.loads(subprocess.check_output([
+                sys.executable, str(SCRIPT), directory,
+                '--now', '2026-01-02T09:00:00+00:00'], text=True))
 
             self.assertEqual(result["counts"], {"new_unscheduled": 1, "overdue": 1})
             self.assertEqual(result["cards"][0]["chunk"], "build on")

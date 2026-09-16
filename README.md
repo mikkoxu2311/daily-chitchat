@@ -1,197 +1,54 @@
 # Daily Chitchat
 
-An evidence-first Codex Skill for spoken-English practice with ChatGPT Voice and Obsidian.
+English speaking practice with ChatGPT Voice, a local Codex host, and source-linked Obsidian notes.
 
-Daily Chitchat turns a short conversation into a durable learning loop:
-
-```text
-Obsidian review queue
-        ↓
-ChatGPT Voice conversation
-        ↓
-review session → re-say 1–2 useful gaps
-        ↓
-structured handoff
-        ↓
-Codex checks history → session note + cards + refreshed queue
-```
-
-The important bit is the historical check. Voice can suggest corrections, but it cannot reliably decide that a problem is recurring, that a phrase deserves a card, or that a learner has mastered it. Daily Chitchat treats the transcript as evidence and makes those decisions against the learner's saved history.
-
-## What it does
-
-- Runs low-interruption English conversation practice.
-- Silently creates natural opportunities to reuse up to two past expressions.
-- Reviews communication-blocking gaps instead of polishing every sentence.
-- Uses a versioned JSON handoff between Voice and a file-capable Codex task.
-- Saves source-traceable Obsidian session notes.
-- Creates zero to two production flashcards only when justified.
-- Keeps a bounded review queue for the next conversation.
-- Reads common Obsidian FSRS scheduling comments without modifying them.
-
-## What it does not do
-
-- It does not expose an entire Obsidian vault to ChatGPT Voice.
-- It does not pretend that a Voice transcript is verbatim.
-- It does not manufacture spaced-repetition scheduling metadata.
-- It does not create cards to hit a quota.
-- It does not require a manual “word of the day” for normal sessions.
-
-## Install
-
-### Codex Skills CLI
+## Install and setup
 
 ```bash
 npx skills add mikkoxu2311/daily-chitchat
 ```
 
-### Manual install
+Requires Python 3.9+ and a local English project containing `Sessions/`. Configure `local.json` beside SKILL.md with your own absolute `project_root` and IANA `timezone`. This file is private and ignored by Git. See [setup](references/project-setup.md).
 
-Clone the repository into your Codex skills directory:
-
-```bash
-git clone https://github.com/mikkoxu2311/daily-chitchat.git ~/.codex/skills/daily-chitchat
-```
-
-Restart or open a new Codex task so the Skill is discovered.
-
-## Requirements
-
-- Codex or another Skill-compatible, file-capable coding agent.
-- An Obsidian vault.
-- ChatGPT Voice for the conversation.
-- Python 3.10+ for the optional read-only FSRS scanner.
-- Optional: an Obsidian spaced-repetition plugin that writes `<!--SR:!fsrs,...-->` comments.
-
-You can use the core workflow without a spaced-repetition plugin. New cards will simply appear as `new_unscheduled` in the scan.
-
-## First-time setup
-
-Open your Obsidian vault as the Codex workspace and ask:
-
-```text
-Use $daily-chitchat to set up my English speaking workflow in this vault.
-```
-
-The Skill will reuse an existing English-learning folder when one exists. Otherwise it recommends this minimal layout:
-
-```text
-English Speaking/
-├── Sessions/
-├── ChatGPT Voice Project Instructions.md
-└── English Speaking Review Queue.md
-```
-
-It copies and customizes [`assets/voice-project-instructions.md`](assets/voice-project-instructions.md) for the learner. The template contains explicit placeholders and no personal data.
-
-### If Voice cannot access local files
-
-This is the most portable setup:
-
-1. Create a ChatGPT Project for English speaking.
-2. Put the customized Voice instructions into the Project Instructions.
-3. Add the current `English Speaking Review Queue.md` as a Project Source.
-4. Start a Voice chat and speak normally.
-5. Say `review session` and complete the guided re-say.
-6. Say `Save Session` (capitalization does not matter).
-7. Paste the returned JSON into a Codex task opened on your vault.
-8. Replace the Project Source after Codex refreshes the queue.
-
-If Voice and the Skill share local file access, step 7 can happen directly.
+Open the English project as a Codex workspace. In Remote Voice, use an existing task with write access to that project where supported. Generic new Voice tasks may not inherit extra writable directories; Skill instructions do not grant host permissions. Actual startup and saving must be checked on your host.
 
 ## Daily use
 
-Start with:
+Say: **Use the daily chitchat skill and start our daily session.**
 
-```text
-Let's start our English speaking session.
-```
+The host loads the Queue and coaching rules. It selects at most two targets, including at most one transfer check. Learning expressions can be announced; a check begins with a new scenario without revealing its English answer. Continue the conversation, say **Review Session**, then **Save Session**. Saving writes a Session, updates Queue and verifies both. Partial practice can be saved; repeat Save reuses the same record.
 
-During the session you can optionally use:
+## Three speaking states
 
-- `scenario: checking into a hotel` — role-play a specific situation.
-- `activation target: push back on` — manually prioritize a high-stakes expression.
-- `review session` — stop the conversation and review evidence-backed gaps.
-- `Save Session` — produce or directly process the structured handoff. Voice should recognize it case-insensitively.
+| State | Meaning | Next step |
+|---|---|---|
+| learning | No supported correct use yet | Explain, model and practice |
+| ready_to_check | Can use it after help, or later-context evidence is incomplete | Arrange a new situation in a later session |
+| retired | One successful later-session transfer check, or explicit user removal | Leave routine review; reopen for real difficulty or user request |
 
-Activation Targets are exceptional, not required daily state. Normal retrieval comes from the review queue.
+The coach creates the opportunity instead of waiting for a coincidental topic. Context and meaning cues are allowed. After a correct alternative, one reminder to recall another previously learned expression is allowed. English wording, initials and model answers must remain hidden until the attempt. A short Chinese scenario cue is allowed when useful; other Voice output remains English. Correct alternatives are successful communication, but do not prove retrieval of the target.
 
-## The decision model
+Record `transfer_pass` or `user_choice` as the retirement reason. Same-session repetition after an answer disclosure cannot retire a target. Retirement means leaving routine practice, not permanent mastery. No opportunity does not count as failure.
 
-Every expression gap ends in one of three states:
+Queue schema is `english-speaking-queue/v4`; handoffs remain v3 with added optional transfer evidence fields. Old handoffs and Session evidence remain readable. Migrate old states by checked evidence, preserving original historical notes. See [coaching](references/voice-coaching.md) and [saving](references/handoff-and-note-format.md). The retained handoff-v2 schema is legacy import documentation only.
 
-| State | Meaning |
-| --- | --- |
-| `discard` | Unclear, stylistic, narrow, duplicated, or already demonstrated naturally. Keep the history; make no card. |
-| `card` | A reusable Chunk that materially blocked communication and can be prompted with one concrete cue. |
-| `deepen` | Repeated failure, recall without transfer, repeated Again/Hard results, or a near-term high-stakes need. |
+## Flashcards
 
-This prevents a common failure mode: a giant deck full of elegant phrases the learner never needed to say.
+Save may add zero to two useful, nonduplicate expression cards inside the Session note. Cards have a concrete production cue and example. Speaking state and card decisions are separate. Obsidian alone manages FSRS scheduling and ratings; these never drive Queue priority or retirement. The scanner is read-only and optional.
 
-## Review queue
-
-The queue is deliberately bounded:
-
-- 8 Active Review Targets
-- 5 Deepen Targets
-- 5 Grammar Watch patterns
-- 8 Recently Demonstrated items
-
-The ordering is overdue → due now → new unscheduled. Future-scheduled cards stay out unless they qualify for deeper transfer practice. Recent independent use removes an item from active Voice testing without deleting its card or scheduler history.
-
-## FSRS scanner
-
-Run it directly with:
+## Verification
 
 ```bash
-python3 scripts/scan_fsrs_cards.py "/absolute/path/to/English Speaking/Sessions"
-```
-
-For deterministic tests:
-
-```bash
-python3 scripts/scan_fsrs_cards.py "/absolute/path/to/Sessions" \
-  --now "2026-01-15T09:00:00+00:00"
-```
-
-The scanner prints JSON and never edits notes. It classifies cards as:
-
-- `new_unscheduled`
-- `overdue`
-- `due_later_today`
-- `scheduled_future`
-
-## Repository structure
-
-```text
-.
-├── SKILL.md
-├── agents/openai.yaml
-├── assets/voice-project-instructions.md
-├── references/
-│   ├── handoff-and-note-format.md
-│   ├── handoff-v2.schema.json
-│   └── setup.md
-├── scripts/scan_fsrs_cards.py
-└── tests/test_scan_fsrs_cards.py
-```
-
-## Privacy and safety
-
-- Keep the Voice integration scoped to the English project folder, not the full vault.
-- Review the learner profile before uploading Project Instructions.
-- Do not commit real session notes, queue contents, transcripts, or vault paths to this repository.
-- A copied Voice transcript may be imperfect. Preserve uncertainty and never invent missing speech.
-
-## Development
-
-Run the unit test:
-
-```bash
+python3 scripts/session_context.py prepare --project /absolute/path/to/English
+python3 scripts/session_context.py check --project /absolute/path/to/English
 python3 -m unittest discover -s tests -v
 ```
 
-Validate the Skill structure with Codex's `quick_validate.py` from the bundled `skill-creator` Skill.
+The helper checks structure and source links, not language judgment or live host behavior. Queue limits: 8 active, 5 deepen, 5 grammar observations and 8 displayed retired expressions. Sessions preserve omitted history.
+
+## Privacy
+
+Publish only portable Skill files. Never publish local.json, learner preferences, actual Sessions, Queue or private paths. No mandatory flashcard plugin or custom API key is required by the Skill.
 
 ## License
 
