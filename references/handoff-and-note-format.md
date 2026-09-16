@@ -54,7 +54,7 @@ Apply learning, ready_to_check and retired in voice-coaching.md. One later-sessi
 
 Use `YYYY-MM-DD English Speaking.md`; increment ` 2`, ` 3` only for genuinely separate same-day practices. Generate a stable session_id once per practice (task ID plus practice-start ID/time if available, otherwise generate once). Reuse it on retry. For old records without IDs compare date and source conversation/evidence, not topic alone. Partial saves resume the same note. Preserve existing FSRS comments when merging.
 
-Frontmatter:
+Frontmatter: use exactly these ten default properties for new records. Preserve session_id across retries; created is the note creation date and date is the practice date. A known duration may be added only when useful; omit unknown/empty optional properties.
 
 ```yaml
 ai_authored: true
@@ -64,23 +64,23 @@ human_reviewed: false
 type: english-speaking-session
 date: YYYY-MM-DD
 session_id: "stable-id-for-this-practice"
-handoff_schema: english-speaking-session-handoff/v3
-mode: daily
-topic: "Short topic"
-duration_minutes: null
+topic: "简短中文话题"
 review_status: completed
-review_source_status: read
-selected_targets: []
-incidental_targets: []
-grammar_gaps: []
-grammar_observations: []
-cards_added: 0
-activation_target: null
-next_activation_target: null
-tags: [english-speaking, flashcards/english/speaking]
+tags: [english-speaking]
 ```
 
-Body: Session (summary, provenance, warnings); Speaking Evidence (selected/incidental, actual words, prompt chronology, context, result, state before/after and source); Track A · Expression Gaps; Track B · Form Observations; Re-say only when useful; Flashcards. Do not repeat quotations across sections. A local Evidence correction supersedes a mistaken historical interpretation without changing what was said. Do not reformat unrelated old records.
+Keep the v3 handoff schema and evidence fields in the internal handoff; do not copy them all into note properties. Do not generate handoff_schema, mode, review_source_status, selected_targets, announced_targets, incidental_targets, grammar_gaps, grammar_observations, cards_added, activation_target or next_activation_target as default Session properties. Preserve meaningful evidence in the body. The current Queue governs future selection; the Session retains any explicit user target and what was decided at that time. Legacy notes remain valid without bulk migration.
+
+Write a learner-readable Chinese body, preserving English attempts and examples:
+
+1. 本次回顾: a short topic/learning summary; mention partial or skipped review honestly.
+2. 表达练习（Track A）: one heading per expression, intended meaning, actual first attempt, suggested expression/model, actual re-say when present, and what to practice next. Clearly distinguish coach wording from learner wording.
+3. 语法反馈（Track B）: retain stable pattern headings; original wording, minimal correction and a short explanation. Label uncertain observations and undelivered written feedback.
+4. 旧表达复习: the new situation, actual answer, whether the answer was disclosed before the attempt, and the result. Keep prior Session source links.
+5. Flashcards: keep this exact heading and the plugin-compatible card format below. No placeholder cards.
+6. 记录与依据: use a collapsed `> [!info]-` callout for necessary provenance, hint chronology, transcript confidence/warnings, state transitions and Queue decisions. Omit routine success logs and avoid quoting the same attempt twice. Do not discard evidence needed for later state decisions or grammar recurrence checks.
+
+Omit empty learning sections. Keep externally referenced expression/pattern headings outside folded callouts and preserve their exact text when editing an existing note. Preserve existing FSRS comments and card text byte-for-byte during readability-only edits. Use flashcards/english/speaking in tags only for notes with cards when compatible with the configured plugin; preserve existing card tags when editing. A local Evidence correction supersedes a mistaken historical interpretation without changing what was said. Do not reformat unrelated old records.
 
 Optional cards retain this plugin-compatible shape:
 
@@ -95,7 +95,7 @@ Optional cards retain this plugin-compatible shape:
 **Example:** A natural sentence in the learner's context.
 ```
 
-Keep ? on its own line. cards_added equals the cards in the note. Zero cards means no placeholder card. Quote ambiguous YAML strings. Do not add/modify `<!--SR:...-->` scheduling comments; optional Obsidian review alone manages FSRS.
+Keep ? on its own line. Count cards from the body; do not generate cards_added. If a legacy note includes cards_added, it must still match the body. Zero cards means no placeholder card. Quote ambiguous YAML strings. Do not add/modify `<!--SR:...-->` scheduling comments; optional Obsidian review alone manages FSRS.
 
 ## Speaking Queue
 

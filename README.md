@@ -32,6 +32,12 @@ Record `transfer_pass` or `user_choice` as the retirement reason. Same-session r
 
 Queue schema is `english-speaking-queue/v4`; handoffs remain v3 with added optional transfer evidence fields. Old handoffs and Session evidence remain readable. Migrate old states by checked evidence, preserving original historical notes. See [coaching](references/voice-coaching.md) and [saving](references/handoff-and-note-format.md). The retained handoff-v2 schema is legacy import documentation only.
 
+## Session notes
+
+New notes use ten default properties: `ai_authored`, `ai_author`, `created`, `human_reviewed`, `type`, `date`, `session_id`, `topic`, `review_status`, and `tags`. Learning content comes first: a short recap, expression practice, grammar feedback, old-expression review, and optional flashcards. Detailed evidence lives in a collapsed callout at the end. Original attempts, hint chronology, source links and speaking states remain available for later review.
+
+The internal handoff remains v3; its fields are not all copied into note properties. Card counts are derived from the body. Legacy notes remain supported, including count verification when `cards_added` is present. Reformatting preserves the session ID, referenced headings, card text and FSRS comments; refresh the Queue fingerprint after reconciling any Session edits.
+
 ## Flashcards
 
 Save may add zero to two useful, nonduplicate expression cards inside the Session note. Cards have a concrete production cue and example. Speaking state and card decisions are separate. Obsidian alone manages FSRS scheduling and ratings; these never drive Queue priority or retirement. The scanner is read-only and optional.

@@ -120,12 +120,12 @@ def check(data: dict, session: Path | None) -> dict:
             raise ValueError("--session must name a file directly inside this project's Sessions/.")
         text = session.read_text(encoding="utf-8")
         errors.extend(link_errors(text, data["notes"], session.stem))
-        for name in ("ai_authored", "ai_author", "created", "human_reviewed", "type", "date", "handoff_schema", "cards_added"):
+        for name in ("ai_authored", "ai_author", "created", "human_reviewed", "type", "date"):
             if field(text, name) is None:
                 errors.append(f"Missing Session frontmatter: {name}")
         cards_section = re.search(r"^## Flashcards\s*\n(.*?)(?=^## |\Z)", text, re.M | re.S)
         cards = re.findall(r"^### Card \d+ · [^\n]+\n(.*?)(?=^### |\Z)", cards_section.group(1), re.M | re.S) if cards_section else []
-        if field(text, "cards_added") != str(len(cards)):
+        if field(text, "cards_added") is not None and field(text, "cards_added") != str(len(cards)):
             errors.append("cards_added does not match physical cards")
         for body in cards:
             if "\n?\n" not in body or "**Chunk:**" not in body or "**Example:**" not in body:
